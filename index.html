@@ -15,6 +15,21 @@
         * { box-sizing: border-box; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; }
         body { background: #eef2f7; margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
 
+        /* --- نظام تسجيل الدخول الجديد --- */
+        #auth-overlay {
+            position: fixed; inset: 0; background: linear-gradient(135deg, var(--main-color), #3949ab);
+            z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .auth-card {
+            background: white; width: 100%; max-width: 480px; border-radius: 25px; padding: 35px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; animation: slideIn 0.5s ease;
+        }
+        .auth-card h2 { color: var(--main-color); margin-bottom: 25px; font-weight: 900; }
+        .auth-footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; font-size: 14px; }
+        .auth-footer span { color: var(--main-color); cursor: pointer; font-weight: 700; text-decoration: underline; }
+        .auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: right; }
+        /* ---------------------------------- */
+
         /* Sidebar Pro */
         .sidebar { width: 280px; background: var(--main-color); color: white; display: flex; flex-direction: column; z-index: 100; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
         .logo-area { padding: 30px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -81,7 +96,6 @@
         
         .action-btn { width: 35px; height: 35px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin: 0 2px; border: none; color: white; }
         
-        /* Receipt Print Styling (A5) */
         @media print { 
             .no-print { display: none !important; } 
             #receipt-box { display: block !important; position: absolute; top: 0; left: 0; width: 148mm; min-height: 210mm; background: white; }
@@ -98,6 +112,39 @@
     </style>
 </head>
 <body>
+
+    <!-- واجهة تسجيل الدخول والاشتراك -->
+    <div id="auth-overlay">
+        <!-- نموذج الدخول -->
+        <div class="auth-card" id="login-panel">
+            <h2>تسجيل الدخول</h2>
+            <input type="text" id="log-user" placeholder="اسم المستخدم">
+            <input type="password" id="log-pass" placeholder="كلمة المرور">
+            <button class="btn btn-primary" style="width:100%; margin-top:20px" onclick="login()">دخول للنظام</button>
+            <div class="auth-footer">
+                ليس لديك حساب؟ <span onclick="toggleAuth(false)">إنشاء حساب جديد</span>
+            </div>
+        </div>
+
+        <!-- نموذج التسجيل الجديد -->
+        <div class="auth-card" id="register-panel" style="display:none;">
+            <h2>فتح حساب جديد</h2>
+            <div class="auth-grid">
+                <div><label>اسم المدرسة</label><input type="text" id="reg-school"></div>
+                <div><label>الولاية</label><input type="text" id="reg-state"></div>
+                <div><label>البلدية</label><input type="text" id="reg-city"></div>
+                <div><label>رقم الهاتف</label><input type="text" id="reg-phone"></div>
+                <div style="grid-column: span 2;"><label>الاسم واللقب الكامل</label><input type="text" id="reg-fullname"></div>
+                <div style="grid-column: span 2;"><label>الجيمايل (Email)</label><input type="email" id="reg-email"></div>
+                <div><label>اسم المستخدم</label><input type="text" id="reg-user"></div>
+                <div><label>كلمة السر</label><input type="password" id="reg-pass"></div>
+            </div>
+            <button class="btn btn-success" style="width:100%; margin-top:20px" onclick="register()">تأكيد التسجيل والبدء</button>
+            <div class="auth-footer">
+                هل أنت مسجل بالفعل؟ <span onclick="toggleAuth(true)">تسجيل الدخول</span>
+            </div>
+        </div>
+    </div>
 
     <div id="status-alert">
         <span id="alert-icon" style="font-size: 24px;">✅</span>
@@ -129,7 +176,7 @@
 
     <div class="sidebar no-print">
         <div class="logo-area">
-            <h2>سفينة البناء</h2>
+            <h2 id="side-school-name">سفينة البناء</h2>
             <p style="font-size: 10px; opacity: 0.6;">نظام الإدارة الذكي v9.0</p>
         </div>
         <div class="nav-menu">
@@ -142,13 +189,15 @@
             <div class="nav-link" onclick="showView('trips-v', this)">🚌 الرحلات والنشاطات</div>
             <div class="nav-link" onclick="showView('reports-v', this)">📈 التقارير المالية</div>
             <div class="nav-link" onclick="showView('settings-v', this)">⚙️ إعدادات النظام</div>
+            <div class="nav-link" style="color:var(--danger); border-top:1px solid rgba(255,255,255,0.1); margin-top:10px" onclick="location.reload()">🚪 خروج</div>
         </div>
     </div>
 
     <div class="content-wrapper">
         <div class="top-bar no-print">
             <h4 id="page-title">لوحة التحكم</h4>
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; align-items:center;">
+                <span id="welcome-user" style="font-weight:bold; color:var(--main-color)"></span>
                 <button class="btn btn-primary" onclick="toggleModal('student-modal', true)">+ تسجيل تلميذ</button>
                 <div id="school-info-header" style="text-align: left;">
                     <b id="h-school-name">سفينة البناء</b><br>
@@ -158,7 +207,6 @@
         </div>
 
         <div class="view-container">
-            <!-- View Sections are rendered here by JavaScript -->
             <div id="dash-v" class="view-section active-view">
                 <div class="stat-grid">
                     <div class="stat-card" style="background: linear-gradient(45deg, #303f9f, #7986cb);">
@@ -180,7 +228,6 @@
                 </div>
             </div>
 
-            <!-- Students -->
             <div id="students-v" class="view-section">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -194,7 +241,6 @@
                 </div>
             </div>
 
-            <!-- Teachers -->
             <div id="teachers-v" class="view-section">
                 <div class="card">
                     <h4>إضافة أستاذ</h4>
@@ -212,7 +258,6 @@
                 </div>
             </div>
 
-            <!-- Groups -->
             <div id="groups-v" class="view-section">
                 <div class="card">
                     <h4>إنشاء فوج جديد</h4>
@@ -231,7 +276,6 @@
                 </div>
             </div>
 
-            <!-- Debts -->
             <div id="debt-v" class="view-section">
                 <div class="card">
                     <h4>تسوية الديون</h4>
@@ -246,7 +290,6 @@
                 </div>
             </div>
 
-            <!-- Schedule -->
             <div id="schedule-v" class="view-section">
                 <div class="card">
                     <h4>جدول التوقيت الأسبوعي</h4>
@@ -261,7 +304,6 @@
                 </div>
             </div>
 
-            <!-- Trips -->
             <div id="trips-v" class="view-section">
                 <div class="card">
                     <h4>إدارة الرحلات والنشاطات</h4>
@@ -275,7 +317,6 @@
                 </div>
             </div>
 
-            <!-- Reports -->
             <div id="reports-v" class="view-section">
                 <div class="card">
                     <h4>التقرير المالي</h4>
@@ -287,7 +328,6 @@
                 </div>
             </div>
 
-            <!-- Settings -->
             <div id="settings-v" class="view-section">
                 <div class="card">
                     <h4>إعدادات النظام</h4>
@@ -331,6 +371,49 @@
     </div>
 
     <script>
+        // --- إدارة حسابات المستخدمين ---
+        let auth_db = JSON.parse(localStorage.getItem('SAF_AUTH')) || [];
+        let active_user = null;
+
+        function toggleAuth(showLogin) {
+            document.getElementById('login-panel').style.display = showLogin ? 'block' : 'none';
+            document.getElementById('register-panel').style.display = showLogin ? 'none' : 'block';
+        }
+
+        function register() {
+            const user = {
+                school: document.getElementById('reg-school').value,
+                state: document.getElementById('reg-state').value,
+                city: document.getElementById('reg-city').value,
+                phone: document.getElementById('reg-phone').value,
+                fullname: document.getElementById('reg-fullname').value,
+                email: document.getElementById('reg-email').value,
+                username: document.getElementById('reg-user').value,
+                pass: document.getElementById('reg-pass').value
+            };
+            if(!user.username || !user.pass) return alert("أكمل بيانات الدخول الأساسية");
+            auth_db.push(user);
+            localStorage.setItem('SAF_AUTH', JSON.stringify(auth_db));
+            alert("تم إنشاء حسابك بنجاح! سجل دخولك الآن.");
+            toggleAuth(true);
+        }
+
+        function login() {
+            const u = document.getElementById('log-user').value;
+            const p = document.getElementById('log-pass').value;
+            const found = auth_db.find(x => x.username === u && x.pass === p);
+            if(found) {
+                active_user = found;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('welcome-user').innerText = found.fullname;
+                document.getElementById('side-school-name').innerText = found.school;
+                db.settings.name = found.school;
+                db.settings.phone = found.phone;
+                render();
+            } else { alert("خطأ في اسم المستخدم أو كلمة المرور"); }
+        }
+        // -----------------------------
+
         let db = JSON.parse(localStorage.getItem('SAF_V9_DATA')) || {
             students: [], teachers: [], groups: [], payments: [], salary_paid: [], trips: [],
             settings: { name: "سفينة البناء", phone: "05XXXXXXXX", percent: 30, currency: "دج" }
@@ -347,7 +430,6 @@
 
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
-        // Logic Functions
         function confirmAddStudent() {
             const name = document.getElementById('m-name').value;
             const gId = document.getElementById('m-group').value;
@@ -381,7 +463,6 @@
                     db.payments.push({ id: payId, sId, gId, amt: Number(amt), date: new Date().toLocaleDateString() });
                     save();
                     triggerSuccess("تم تسجيل الدفع");
-                    
                     if(confirm("هل تريد طباعة وصل احترافي (A5)؟")) {
                         const student = db.students.find(x => x.id == sId);
                         const group = db.groups.find(x => x.id == gId);
@@ -401,14 +482,10 @@
             document.getElementById('pr-amount').innerText = amt;
             document.getElementById('pr-curr').innerText = db.settings.currency;
             document.getElementById('pr-stamp').innerText = db.settings.name;
-
             const qrArea = document.getElementById('qrcode');
             qrArea.innerHTML = "";
             new QRCode(qrArea, { text: `REC-${id}-${name}-${amt}`, width: 80, height: 80 });
-
-            setTimeout(() => {
-                window.print();
-            }, 500);
+            setTimeout(() => { window.print(); }, 500);
         }
 
         function addTrip() {
@@ -423,29 +500,20 @@
         function render() {
             document.getElementById('h-school-name').innerText = db.settings.name;
             document.getElementById('h-school-phone').innerText = db.settings.phone;
-            
-            // Render Stats
             let totalIncome = db.payments.reduce((a,b) => a+b.amt, 0);
             let totalSalary = db.salary_paid.reduce((a,b) => a+b.amt, 0);
             let totalTripCosts = db.trips.reduce((a,b) => a+b.cost, 0);
-            
             document.getElementById('stat-s').innerText = db.students.length;
             document.getElementById('stat-g').innerText = db.groups.length;
             document.getElementById('stat-m').innerText = totalIncome + " " + db.settings.currency;
-            
-            // Reports View Update
             document.getElementById('rep-in').innerText = totalIncome;
             document.getElementById('rep-out').innerText = totalSalary + totalTripCosts;
             document.getElementById('rep-net').innerText = totalIncome - (totalSalary + totalTripCosts);
-
-            // Group Table
             document.getElementById('g-tbody').innerHTML = db.groups.map(g => {
                 const count = db.students.filter(s => s.groupId == g.id).length;
                 const teacher = db.teachers.find(t => t.id == g.teacherId);
                 return `<tr><td>${g.name}</td><td>${teacher?teacher.name:'--'}</td><td>${g.price}</td><td>${count}</td><td><button onclick="del('groups',${g.id})" class="action-btn" style="background:red">🗑️</button></td></tr>`;
             }).join('');
-
-            // Teachers Table
             let teacherDebtTotal = 0;
             document.getElementById('t-tbody').innerHTML = db.teachers.map(t => {
                 const tGs = db.groups.filter(g => g.teacherId == t.id).map(g => g.id.toString());
@@ -456,24 +524,18 @@
                 return `<tr><td>${t.name}</td><td>${t.subject}</td><td>${income}</td><td>${share.toFixed(0)}</td><td>${paid}</td><td>${(share-paid).toFixed(0)}</td><td><button onclick="paySalary(${t.id}, ${share-paid})">💵</button></td></tr>`;
             }).join('');
             document.getElementById('stat-d').innerText = teacherDebtTotal.toFixed(0);
-
-            // Trips
             document.getElementById('trips-tbody').innerHTML = db.trips.map(tr => `<tr><td>${tr.name}</td><td>${tr.date}</td><td>${tr.cost}</td><td>✅</td></tr>`).join('');
-
-            updateDropdowns();
-            renderStudents();
-            renderDebt();
+            updateDropdowns(); renderStudents(); renderDebt();
         }
 
         function updateDropdowns() {
             let tHtml = '<option value="">اختر الأستاذ</option>';
             db.teachers.forEach(t => tHtml += `<option value="${t.id}">${t.name}</option>`);
-            document.getElementById('g-teacher').innerHTML = tHtml;
-
+            if(document.getElementById('g-teacher')) document.getElementById('g-teacher').innerHTML = tHtml;
             let gHtml = '<option value="">اختر الفوج</option>';
             db.groups.forEach(g => gHtml += `<option value="${g.id}">${g.name}</option>`);
-            document.getElementById('m-group').innerHTML = gHtml;
-            document.getElementById('debt-g-filter').innerHTML = '<option value="">كل الأفواج</option>' + gHtml;
+            if(document.getElementById('m-group')) document.getElementById('m-group').innerHTML = gHtml;
+            if(document.getElementById('debt-g-filter')) document.getElementById('debt-g-filter').innerHTML = '<option value="">كل الأفواج</option>' + gHtml;
         }
 
         function renderStudents() {
@@ -490,7 +552,6 @@
             let list = db.students;
             if(gId) list = list.filter(s => s.groupId == gId);
             if(search) list = list.filter(s => s.name.toLowerCase().includes(search));
-
             document.getElementById('debt-tbody').innerHTML = list.map(s => {
                 const g = db.groups.find(x => x.id == s.groupId);
                 const paid = db.payments.filter(p => p.sId == s.id).reduce((a,b) => a + b.amt, 0);
@@ -516,12 +577,9 @@
         }
 
         function del(key, id) { if(confirm("هل أنت متأكد؟")) { db[key] = db[key].filter(x => x.id != id); save(); } }
-        function resetSystem() { if(confirm("سيتم حذف كل البيانات!")) { localStorage.removeItem('SAF_V9_DATA'); location.reload(); } }
-
+        
         const ctx = document.getElementById('mainChart').getContext('2d');
         new Chart(ctx, { type: 'line', data: { labels: ['يناير','فبراير','مارس','أبريل'], datasets: [{ label: 'المداخيل', data: [10000, 15000, 12000, 20000], borderColor: '#1a237e' }] } });
-
-        render();
     </script>
 </body>
 </html>
